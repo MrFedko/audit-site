@@ -95,3 +95,18 @@ function resetAll() {
     const totalScoreElement = document.getElementById('total-score');
     totalScoreElement.textContent = 'Total Score: 0';
 }
+
+
+function savePageAsImage() {
+    html2canvas(document.body).then(function(canvas) {
+        // Создаем ссылку для скачивания изображения
+        var link = document.createElement('a');
+        link.download = 'page_screenshot.png';
+        link.href = canvas.toDataURL('image/png');
+        
+        // Добавляем ссылку к DOM и эмулируем клик по ней для скачивания изображения
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+}
