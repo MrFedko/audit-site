@@ -98,7 +98,11 @@ function resetAll() {
 
 
 function savePageAsImage() {
-    html2canvas(document.body).then(function(canvas) {
+    html2canvas(document.body, {
+        imageTimeout: 15000, //newline
+        scale:3, //newline
+        useCORS: true
+}).then(function(canvas) {
         // Создаем ссылку для скачивания изображения
         var link = document.createElement('a');
         link.download = 'page_screenshot.png';
@@ -109,4 +113,5 @@ function savePageAsImage() {
         link.click();
         document.body.removeChild(link);
     });
+    
 }
