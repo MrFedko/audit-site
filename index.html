@@ -236,13 +236,22 @@
         </tfoot>
     </table>
 
-
-    <div style="display: flex;">
+    <div class="total" style="display: flex; flex-direction:column;">
         <p id="total-score">Total Score: 0</p>
+        <div style="display: flex; flex-direction:row;">
+            <p>Total Tasks:</p>
+            <p id="total-tasks">0</p>
+        </div>
+        <p id="total-ready">Total Ready: 0</p>
+        <p id="total-percent">Completion percentage: 0%</p>
     </div>
 
     <button onclick="resetAll()">Сбросить все</button>
     <button onclick="savePageAsImage()">Save Page as Image</button>
+    <!-- check all checkboxes -->
+    <!-- <button onclick="allcheck(-1)">-1 check</button>
+    <button onclick="allcheck(0)">0 check</button>
+    <button onclick="allcheck(1)">1 check</button> -->
 
     <script src="script.js"></script>
 </body>

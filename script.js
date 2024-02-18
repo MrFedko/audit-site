@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const totalScoreElement = document.getElementById('total-score');
-    let totalScore = 0;
+    const totalTasksElement = document.getElementById('total-tasks');
+    var totalTasks = 0;
+
     
     // Для каждой таблицы с вопросами
     [...Array(12).keys()].forEach(tableIndex => {
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const questions = data.split('\n').map(question => question.trim());
                 questions.forEach(questionText => {
+                    totalTasks++;
                     const tr = document.createElement('tr');
                     const questionTd = document.createElement('td');
                     questionTd.textContent = questionText;
@@ -36,18 +38,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         checkbox.addEventListener('change', () => {
                             resetOtherCheckboxesInRow(checkbox); // Сброс других чекбоксов в строке
                             updateScores(scoreElements, tableIndex);
+                            checkTotalReady();
+
                         });
                     });
 
                     tr.insertBefore(questionTd, tr.firstChild);
                     questionTableElement.appendChild(tr);
                 });
+                totalTasksElement.textContent = `${totalTasks}`;
             })
             .catch(error => {
                 console.error(`Error fetching questions for table ${tableIndex + 1}:`, error);
             });
     });
-
+    
     function updateScores(scorel, table) {
         const checkboxes = document.querySelectorAll(`input[class="${table}"]`);
         let totalScore = 0;
@@ -58,11 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (checkbox.checked) {
                 const value = parseInt(checkbox.value);
                 scores[index % 3]++; // % 3 для получения правильного индекса в массиве scores
-                if (value === -1) {
-                    totalScore--;
-                } else if (value === 1) {
-                    totalScore++;
-                }
             }
         });
 
@@ -70,12 +70,11 @@ document.addEventListener('DOMContentLoaded', function() {
             scorel[index].textContent = scores[index];
         }
 
-        totalScoreElement.textContent = `Total Score: ${totalScore}`;
+
     }
 
     function resetOtherCheckboxesInRow(currCheckbox) {
         const currentRowCheckboxes = document.querySelectorAll(`input[name="${currCheckbox.name}"]`);
-
         currentRowCheckboxes.forEach(checkbox => {
             if (checkbox !== currCheckbox) {
                 checkbox.checked = false;
@@ -83,6 +82,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function checkTotalReady(){
+    const totalReadyElement = document.getElementById('total-ready');
+    let totalReady = 0;
+    const totalScoreElement = document.getElementById('total-score');
+    let totalScore = 0;
+    const totalPercElement = document.getElementById('total-percent');
+    let totalPercent = 0;
+    [...Array(12).keys()].forEach(tableIndex => {
+        const scoreEls = {
+            0: document.getElementById(`${tableIndex}score-1`),
+            1: document.getElementById(`${tableIndex}score0`),
+            2: document.getElementById(`${tableIndex}score1`)
+        };
+        for (let index = 0; index < Object.keys(scoreEls).length; index++) {
+            totalReady += parseInt(scoreEls[index].textContent);
+        };
+        totalScore += parseInt(scoreEls[2].textContent) - parseInt(scoreEls[0].textContent);
+    });
+    const totalTasksElement = document.getElementById('total-tasks');
+    totalTasks = parseInt(totalTasksElement.textContent);
+    totalPercent = totalReady / (totalTasks/100);
+    totalReadyElement.textContent = `Total Ready: ${totalReady}`;
+    totalScoreElement.textContent = `Total Score: ${totalScore}`;
+    totalPercElement.textContent = `Completion percentage: ${totalPercent.toFixed(2)}%`;
+};
 
 function resetAll() {
     // Сброс чекбоксов
@@ -94,6 +119,10 @@ function resetAll() {
     // Сброс общего счета
     const totalScoreElement = document.getElementById('total-score');
     totalScoreElement.textContent = 'Total Score: 0';
+    const totalReadyElement = document.getElementById('total-ready');
+    totalReadyElement.textContent = 'Total Ready: 0'
+    const totalPercElement = document.getElementById('total-percent');
+    totalPercElement.textContent = 'Completion percentage: 0%'
 }
 
 
@@ -115,3 +144,12 @@ function savePageAsImage() {
     });
     
 }
+
+function allcheck(value) {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        if (checkbox.value == value) {
+            checkbox.click();
+        }
+    });
+};
