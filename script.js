@@ -202,6 +202,21 @@ document.getElementById('save-pdf').addEventListener('click', async () => {
     pdf.text('Отчёт по аудиту', margin, y);
     y += 10;
 
+    const restaurantName = document.getElementById("restaurantName").value;
+    const auditorName = document.getElementById("auditorName").value;
+    const auditDate = document.getElementById("auditDate").value;
+
+
+    pdf.setFontSize(14);
+    pdf.text(`Название ресторана: ${restaurantName}`, 10, y);
+    y += 10;
+    pdf.text(`Имя Фамилия аудитора: ${auditorName}`, 10, y);
+    y += 10;
+    pdf.setFontSize(14);
+    pdf.text(`Дата аудита: ${auditDate}`, margin, y);
+    y += 10;
+
+
     for (let tableIndex = 1; tableIndex <= 12; tableIndex++) {
         const table = document.getElementById(`question-table-${tableIndex}`);
         if (!table) continue;
@@ -298,6 +313,22 @@ document.getElementById('save-pdf').addEventListener('click', async () => {
         }
         y += 5;
     }
+    // Получаем данные (если они есть в HTML или JS)
+// Получаем итоговые значения
+    const totalScore = document.getElementById("total-score").textContent.replace("Total Score: ","");
+    const totalReady = document.getElementById("total-ready").textContent.replace("Total Ready: ","");
+    const totalPercent = document.getElementById("total-percent").textContent.replace("Completion percentage: ","");
+    const totalTasks = document.getElementById("total-tasks").textContent; // total-tasks у вас есть
+
+    pdf.setFontSize(12);
+    pdf.text(`Всего очков: ${totalScore}`, 20, y);
+    y += 7;
+    pdf.text(`Всего пунктов: ${totalTasks}`, 20, y);
+    y += 7;
+    pdf.text(`Всего заполнено: ${totalReady}`, 20, y);
+    y += 7;
+    pdf.text(`Процент заполнения: ${totalPercent}`, 20, y);
+
 
     pdf.save('audit-report.pdf');
 });

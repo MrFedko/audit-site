@@ -11,6 +11,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.1/html2canvas.min.js"></script>
 </head>
 <body>
+    <h2>Аудит ресторана</h2>
+    <label>Дата аудита:</label>
+    <input type="date" id="auditDate"><br><br>
+
+    <label>Название ресторана:</label>
+    <input type="text" id="restaurantName" placeholder="Название ресторана"><br><br>
+    
+    <label>Имя Фамилия аудитора:</label>
+    <input type="text" id="auditorName" placeholder="Имя Фамилия"><br><br>
     <table id="question-table-1">
         <thead>
             <tr>
@@ -250,7 +259,7 @@
     </div>
 
     <button onclick="resetAll()">Сбросить все</button>
-    <button onclick="savePageAsImage()">Save Page as Image</button>
+    <button onclick="savePageAsImage()">Сохранить скриншот страницы</button>
     <!-- check all checkboxes -->
     <!-- <button onclick="allcheck(-1)">-1 check</button>
     <button onclick="allcheck(0)">0 check</button>
