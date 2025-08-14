@@ -36,11 +36,41 @@ document.addEventListener('DOMContentLoaded', function() {
                         tr.appendChild(tdCheckbox);
 
                         checkbox.addEventListener('change', () => {
-                            resetOtherCheckboxesInRow(checkbox); // Сброс других чекбоксов в строке
+                            resetOtherCheckboxesInRow(checkbox);
                             updateScores(scoreElements, tableIndex);
                             checkTotalReady();
-
+                        
+                            // Проверяем, есть ли уже строка с extra-fields сразу после вопроса
+                            let nextRow = tr.nextElementSibling;
+                            let extraDiv;
+                            if (nextRow && nextRow.querySelector('.extra-fields')) {
+                                extraDiv = nextRow.querySelector('.extra-fields');
+                            } else {
+                                // Создаём только один раз
+                                extraDiv = document.createElement('div');
+                                extraDiv.className = 'extra-fields';
+                                extraDiv.style.display = 'none';
+                                extraDiv.innerHTML = `
+                                    <textarea placeholder="Комментарий..." class="comment"></textarea>
+                                    <input type="file" accept="image/*" class="photo">
+                                `;
+                                const td = document.createElement('td');
+                                td.colSpan = 4;
+                                td.appendChild(extraDiv);
+                        
+                                const extraRow = document.createElement('tr');
+                                extraRow.appendChild(td);
+                                tr.parentNode.insertBefore(extraRow, tr.nextSibling);
+                            }
+                        
+                            // Показываем / скрываем при выборе -1 или 0
+                            if (checkbox.checked && (checkbox.value === '-1' || checkbox.value === '0')) {
+                                extraDiv.style.display = 'block';
+                            } else {
+                                extraDiv.style.display = 'none';
+                            }
                         });
+                        
                     });
 
                     tr.insertBefore(questionTd, tr.firstChild);
@@ -153,3 +183,121 @@ function allcheck(value) {
         }
     });
 };
+
+document.getElementById('save-pdf').addEventListener('click', async () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    // Шрифт с кириллицей
+    pdf.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+    pdf.setFont("Roboto");
+
+    let y = 10;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const maxLineWidth = pageWidth - margin * 2;
+
+    pdf.setFontSize(14);
+    pdf.text('Отчёт по аудиту', margin, y);
+    y += 10;
+
+    for (let tableIndex = 1; tableIndex <= 12; tableIndex++) {
+        const table = document.getElementById(`question-table-${tableIndex}`);
+        if (!table) continue;
+
+        pdf.setFontSize(12);
+        const titleLines = pdf.splitTextToSize(table.querySelector('th').textContent.trim(), maxLineWidth);
+        pdf.text(titleLines, margin, y);
+        y += titleLines.length * 6 + 2;
+
+        const rows = table.querySelectorAll('tr');
+        for (let i = 1; i < rows.length; i++) {
+            const tr = rows[i];
+            const qCell = tr.querySelector('td');
+            if (!qCell || !qCell.textContent.trim()) continue;
+
+            const question = qCell.textContent.trim();
+            const checked = tr.querySelector('input[type="checkbox"]:checked');
+            if (!checked) continue;
+
+            let comment = null, photoData = null;
+            const extraFields = tr.nextElementSibling?.querySelector('.extra-fields');
+            if (extraFields && extraFields.style.display !== 'none') {
+                comment = extraFields.querySelector('.comment')?.value || null;
+                const fileInput = extraFields.querySelector('.photo');
+                if (fileInput?.files?.length) {
+                    const file = fileInput.files[0];
+                    photoData = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.readAsDataURL(file);
+                    });
+                }
+            }
+
+            pdf.setFontSize(10);
+
+            // Вопрос
+            const qLines = pdf.splitTextToSize(`${question} — Оценка: ${checked.value}`, maxLineWidth);
+            pdf.text(qLines, margin, y);
+            y += qLines.length * 5;
+
+            // Комментарий
+            if (comment) {
+                const cLines = pdf.splitTextToSize(`Комментарий: ${comment}`, maxLineWidth);
+                pdf.text(cLines, margin, y);
+                y += cLines.length * 5;
+            }
+
+            // Фото с сохранением пропорций
+            if (photoData) {
+                const img = new Image();
+                img.src = photoData;
+                await new Promise(resolve => {
+                    img.onload = () => {
+                        let imgWidth = img.width;
+                        let imgHeight = img.height;
+
+                        const maxImgWidth = maxLineWidth;
+                        const maxImgHeight = pageHeight / 3;
+
+                        // масштабируем, сохраняя пропорции
+                        if (imgWidth > maxImgWidth) {
+                            const scale = maxImgWidth / imgWidth;
+                            imgWidth *= scale;
+                            imgHeight *= scale;
+                        }
+                        if (imgHeight > maxImgHeight) {
+                            const scale = maxImgHeight / imgHeight;
+                            imgWidth *= scale;
+                            imgHeight *= scale;
+                        }
+
+                        // перенос на новую страницу, если не влезает
+                        if (y + imgHeight > pageHeight - margin) {
+                            pdf.addPage();
+                            y = margin;
+                        }
+
+                        pdf.addImage(photoData, 'JPEG', margin, y, imgWidth, imgHeight);
+                        y += imgHeight + 5;
+                        resolve();
+                    };
+                });
+            }
+
+            y += 3;
+
+            // перенос страницы при переполнении
+            if (y > pageHeight - margin) {
+                pdf.addPage();
+                pdf.setFont("Roboto");
+                y = margin;
+            }
+        }
+        y += 5;
+    }
+
+    pdf.save('audit-report.pdf');
+});
